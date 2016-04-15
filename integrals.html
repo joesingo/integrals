@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+        }
+        #main_canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="main_canvas"></canvas>
+
+    <script type="text/javascript">
+
+        // Functions
+        function getCanvasCoord(f, t, scale) {
+            return scale*t + 05*(f.domain[1] - f.domain[0]);
+        }
+
+        function resizeCanvas() {
+            // Make the canvas the full size of the screen
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        var canvas = document.getElementById("main_canvas");
+        var ctx = canvas.getContext("2d");
+
+        resizeCanvas();
+        // Resize canvas automatically
+        window.addEventListener("resize", resizeCanvas);
+
+        var settings = {
+            "delta": 0.1,
+
+            "scale": {
+                "x": 20,
+                "y": 20
+            }
+        }
+
+        var f = function(x) {
+            return Math.sin(x);
+        }
+        f.domain = [-2*Math.PI, 2*Math.PI];
+
+        ctx.beginPath();
+        for (var x=f.domain[0]; x<f.domain[1]; x+=settings.delta) {
+            var y = f(x);
+            var canvasX = getCanvasCoord(f, x, settings.scale.x);
+            var canvasY = getCanvasCoord(f, x, settings.scale.y);
+        }
+
+    </script>
+</body>
+
+</html>
