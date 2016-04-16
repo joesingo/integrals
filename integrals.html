@@ -29,7 +29,7 @@
     <script type="text/javascript">
 
         var settings = {
-            "delta": 0.06,
+            "delta": 0.01,
 
             // Size is set when canvas (re)sized
             "size": {},
@@ -38,8 +38,11 @@
 
             "scale": {
                 "x": 70,
-                "y": -140
+                "y": -70
             },
+
+            "minScale": 10,
+            "zoomFactor": 0.08, // The lower this number the slower zooming in is
 
             "colours": {
                 "upperSum": "#C22326",
@@ -48,12 +51,18 @@
         }
 
         var f = function(x) {
-            return Math.sin(x);
+            return 3*Math.sin(x);
         }
-        f.domain = [-10, 10];
+        f.domain = [-15, 15];
         f.anchor = [0, 0];
         f.points = calculatePoints(f);
-        var p = uniformPartition(f.domain, 40);
+        var p = uniformPartition(f.domain, 50);
+
+        function draw() {
+            clearCanvas();
+            drawSums(f, p);
+            drawGraph(f);
+        }
 
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -64,19 +73,13 @@
                 v *= -1;
             }
             settings.scale[axis] = v;
-            clearCanvas();
-            drawSums(f, p);
-            drawGraph(f);
+            draw();
         }
 
         function setAnchor(v, axis) {
             var i = (axis === "x" ? 0 : 1);
             f.anchor[i] = parseFloat(v); // v comes from HTML input so is a string
-            clearCanvas();
-            drawSums(f, p);
-            drawGraph(f);
-
-            console.log(f.anchor);
+            draw();
         }
 
         function calculatePoints(f) {
@@ -182,8 +185,7 @@
             settings.size.x = canvas.width;
             settings.size.y = canvas.height;
 
-            drawSums(f, p);
-            drawGraph(f);
+            draw();
         }
 
         var canvas = document.getElementById("main_canvas");
@@ -224,12 +226,29 @@
             mouseDown = false;
         });
 
+        // Zoom when scrolling
+        canvas.addEventListener("mousewheel", function(e) {
+            var d = settings.zoomFactor * e.wheelDelta;
+            settings.scale.x += d;
+            settings.scale.y -= d;
+
+            // Make sure we're not zoomed too far out
+            if (settings.scale.x <= settings.minScale) {
+                settings.scale.x = settings.minScale;
+            }
+            // We have - here because y scale should always be negative
+            if (-settings.scale.y <= settings.minScale) {
+                settings.scale.y = -settings.minScale;
+            }
+
+            draw();
+        });
+
         resizeCanvas();
         // Resize canvas automatically
         window.addEventListener("resize", resizeCanvas);
 
-        drawSums(f,p);
-        drawGraph(f);
+        draw();
 
     </script>
 </body>
