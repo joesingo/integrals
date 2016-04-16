@@ -39,6 +39,9 @@
             "scale": {
                 "x": 70,
                 "y": -70
+                // y scale is always negative because we want up to be the
+                // positive y direction, but for canvas coordinates it's the
+                // other way around
             },
 
             "minScale": 10,
@@ -51,7 +54,7 @@
         }
 
         var f = function(x) {
-            return 3*Math.sin(x);
+            return Math.sin(x);
         }
         f.domain = [-15, 15];
         f.anchor = [0, 0];
@@ -80,6 +83,11 @@
             var i = (axis === "x" ? 0 : 1);
             f.anchor[i] = parseFloat(v); // v comes from HTML input so is a string
             draw();
+        }
+
+        function getMouseCoords(e, canvas) {
+            // Get the coordinates of the mouse event within the canvas
+            return [e.pageX - canvas.offsetLeft, e.pageY - canvas.offsetTop];
         }
 
         function calculatePoints(f) {
@@ -119,7 +127,12 @@
         }
 
         function drawSums(f, p) {
-            // Draw an upper/lower sum for the function f and partition p
+            // Draw and estimate an upper/lower sum for the function f and
+            // partition p
+
+            var upper = 0;
+            var lower = 0;
+
             for (i=1; i<p.length; i++) {
                 // // Endpoints of this sub-interval
                 var start = p[i - 1];
@@ -149,6 +162,10 @@
                     }
                 }
 
+                // Add to the estimates
+                upper += maxY * (end - start);
+                lower += minY * (end - start);
+
                 // Colours and heights of rectangles
                 var r = [];
                 r.push([maxY, settings.colours.upperSum]);
@@ -175,6 +192,8 @@
 
                 }
             }
+
+            // console.log(lower + "," + upper);
         }
 
         function resizeCanvas() {
@@ -198,21 +217,19 @@
         var mouseDown = false;
         var dragPoint = null;
         canvas.addEventListener("mousedown", function(e) {
-            dragPoint = [e.clientX, e.clientY];
+            dragPoint = getMouseCoords(e, canvas);
             mouseDown = true;
         });
         canvas.addEventListener("mousemove", function(e) {
             if (mouseDown) {
-
                 // Adjust anchor to achieve panning
-                f.anchor[0] += (dragPoint[0] - e.clientX) / settings.scale.x;
-                f.anchor[1] += (dragPoint[1] - e.clientY) / settings.scale.y;
+                var mouseCoords = getMouseCoords(e, canvas);
+                f.anchor[0] += (dragPoint[0] - mouseCoords[0]) / settings.scale.x;
+                f.anchor[1] += (dragPoint[1] - mouseCoords[1]) / settings.scale.y;
 
-                clearCanvas();
-                drawSums(f, p);
-                drawGraph(f);
+                draw();
 
-                dragPoint = [e.clientX, e.clientY];
+                dragPoint = mouseCoords;
             }
         });
         canvas.addEventListener("mouseup", function(e) {
@@ -228,6 +245,11 @@
 
         // Zoom when scrolling
         canvas.addEventListener("mousewheel", function(e) {
+            var mouseCoords = getMouseCoords(e, canvas);
+
+            // Keep a copy of the original scale
+            var origScale = [settings.scale.x, settings.scale.y]
+
             var d = settings.zoomFactor * e.wheelDelta;
             settings.scale.x += d;
             settings.scale.y -= d;
@@ -241,6 +263,11 @@
                 settings.scale.y = -settings.minScale;
             }
 
+            // Now need to adjust anchor so we have zoomed into the right part
+            // of the graph
+            f.anchor[0] -= (mouseCoords[0] - 0.5*settings.size.x)*((1 / settings.scale.x) - (1 / origScale[0]));
+            f.anchor[1] -= (mouseCoords[1] - 0.5*settings.size.y)*((1 / settings.scale.y) - (1 / origScale[1]));
+
             draw();
         });
 
@@ -249,6 +276,14 @@
         window.addEventListener("resize", resizeCanvas);
 
         draw();
+
+        function animate() {
+            var k = 1;
+            setInterval(function() {
+                p = uniformPartition(f.domain, k++);
+                draw();
+            }, 250)
+        }
 
     </script>
 </body>
