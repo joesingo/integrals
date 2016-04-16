@@ -10,6 +10,12 @@
 </head>
 
 <body>
+    <label>
+        x scale: <input type="range" min="10" max="300" onchange="setScale(this.value, 'x')" />
+    </label>
+    <label>
+        y scale: <input type="range" min="10" max="300" onchange="setScale(this.value, 'y')" />
+    </label>
     <canvas id="main_canvas"></canvas>
 
     <script type="text/javascript">
@@ -23,24 +29,37 @@
             "lineWidth": 2,
 
             "scale": {
-                "x": 60,
-                "y": -100
+                "x": 70,
+                "y": -140
             },
 
             "colours": {
-                "upperSum": "red",
-                "lowerSum": "green",
+                "upperSum": "#C22326",
+                "lowerSum": "#027878",
             }
         }
 
         var f = function(x) {
-            return Math.pow(Math.sin(x), 2) - Math.cos(x);
+            return x*x;
         }
         f.domain = [-2*Math.PI, 2*Math.PI];
         f.anchor = [0, 0];
         f.points = calculatePoints(f);
-        var p = uniformPartition(f.domain, 26);
+        var p = uniformPartition(f.domain, 40);
 
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function setScale(v, axis) {
+            if (axis === "y") {
+                v *= -1;
+            }
+            settings.scale[axis] = v;
+            clearCanvas();
+            drawSums(f, p);
+            drawGraph(f);
+        }
 
         function calculatePoints(f) {
             var points = [];
@@ -93,13 +112,13 @@
                     var x = f.points[j][0];
                     var y = f.points[j][1];
 
-                    // Set min/max if this is the first time;
-                    if (minY === null) {
-                        minY = y;
-                        maxY = y;
-                    }
-
                     if (start <= x && x <= end) {
+                        // Set min/max if this is the first time;
+                        if (minY === null) {
+                            minY = y;
+                            maxY = y;
+                        }
+
                         if (y < minY) {
                             minY = y;
                         }
@@ -108,8 +127,6 @@
                         }
                     }
                 }
-
-                console.log(minY, maxY);
 
                 // Colours and heights of rectangles
                 var r = [];
@@ -121,7 +138,6 @@
                 // However if max and min are both negative then lower sums
                 // should be drawn first
                 if (minY < 0 && maxY < 0) {
-                    console.log("reverse");
                     r.reverse();
                 }
 
@@ -155,8 +171,8 @@
         var canvas = document.getElementById("main_canvas");
         var ctx = canvas.getContext("2d");
 
-        canvas.width = 1024;
-        canvas.height = 768;
+        canvas.width = 900;
+        canvas.height = 600;
 
         resizeCanvas();
         // Resize canvas automatically
