@@ -192,6 +192,38 @@
         canvas.width = 900;
         canvas.height = 600;
 
+        // Pan when dragged
+        var mouseDown = false;
+        var dragPoint = null;
+        canvas.addEventListener("mousedown", function(e) {
+            dragPoint = [e.clientX, e.clientY];
+            mouseDown = true;
+        });
+        canvas.addEventListener("mousemove", function(e) {
+            if (mouseDown) {
+
+                // Adjust anchor to achieve panning
+                f.anchor[0] += (dragPoint[0] - e.clientX) / settings.scale.x;
+                f.anchor[1] += (dragPoint[1] - e.clientY) / settings.scale.y;
+
+                clearCanvas();
+                drawSums(f, p);
+                drawGraph(f);
+
+                dragPoint = [e.clientX, e.clientY];
+            }
+        });
+        canvas.addEventListener("mouseup", function(e) {
+            mouseDown = false;
+        });
+        canvas.addEventListener("mouseleave", function(e) {
+            // For some reason if you have mouse down over canvas and then move
+            // mouse off screen/off the canvas, release the mouse, return to
+            // canvas, mouseup event is not fired... So need to set mouseDown
+            // to false here
+            mouseDown = false;
+        });
+
         resizeCanvas();
         // Resize canvas automatically
         window.addEventListener("resize", resizeCanvas);
