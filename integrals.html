@@ -16,6 +16,14 @@
     <label>
         y scale: <input type="range" min="10" max="300" onchange="setScale(this.value, 'y')" />
     </label>
+    <br />
+    <label>
+        anchor x: <input type="range" min="-10" max="10" onchange="setAnchor(this.value, 'x')" />
+    </label>
+    <label>
+        anchor y: <input type="range" min="-10" max="10" onchange="setAnchor(this.value, 'y')" />
+    </label>
+
     <canvas id="main_canvas"></canvas>
 
     <script type="text/javascript">
@@ -40,9 +48,9 @@
         }
 
         var f = function(x) {
-            return x*x;
+            return Math.sin(x);
         }
-        f.domain = [-2*Math.PI, 2*Math.PI];
+        f.domain = [-10, 10];
         f.anchor = [0, 0];
         f.points = calculatePoints(f);
         var p = uniformPartition(f.domain, 40);
@@ -59,6 +67,16 @@
             clearCanvas();
             drawSums(f, p);
             drawGraph(f);
+        }
+
+        function setAnchor(v, axis) {
+            var i = (axis === "x" ? 0 : 1);
+            f.anchor[i] = parseFloat(v); // v comes from HTML input so is a string
+            clearCanvas();
+            drawSums(f, p);
+            drawGraph(f);
+
+            console.log(f.anchor);
         }
 
         function calculatePoints(f) {
@@ -180,7 +198,6 @@
 
         drawSums(f,p);
         drawGraph(f);
-
 
     </script>
 </body>
