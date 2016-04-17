@@ -154,8 +154,8 @@
             // equal width
             var p = [];
             var width = (interval[1] - interval[0]) / n;
-            for (var x=interval[0]; x<=interval[1]; x+=width) {
-                p.push(x);
+            for (var i=0; i<=n; i++) {
+                p.push(interval[0] + i*width);
             }
             return p;
         }
@@ -229,7 +229,6 @@
             ctx.beginPath();
             var y = getCanvasCoord(f, 0, "y");
             ctx.moveTo(0, y);
-            console.log(y);
             ctx.lineTo(canvas.width, y);
             ctx.stroke();
         }
