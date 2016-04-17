@@ -10,20 +10,6 @@
 </head>
 
 <body>
-    <label>
-        x scale: <input type="range" min="10" max="300" onchange="setScale(this.value, 'x')" />
-    </label>
-    <label>
-        y scale: <input type="range" min="10" max="300" onchange="setScale(this.value, 'y')" />
-    </label>
-    <br />
-    <label>
-        anchor x: <input type="range" min="-10" max="10" onchange="setAnchor(this.value, 'x')" />
-    </label>
-    <label>
-        anchor y: <input type="range" min="-10" max="10" onchange="setAnchor(this.value, 'y')" />
-    </label>
-
     <canvas id="main_canvas"></canvas>
 
     <script type="text/javascript">
@@ -118,20 +104,6 @@
 
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function setScale(v, axis) {
-            if (axis === "y") {
-                v *= -1;
-            }
-            settings.scale[axis] = v;
-            draw();
-        }
-
-        function setAnchor(v, axis) {
-            var i = (axis === "x" ? 0 : 1);
-            f.anchor[i] = parseFloat(v); // v comes from HTML input so is a string
-            draw();
         }
 
         function getMouseCoords(e, canvas) {
