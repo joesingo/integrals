@@ -31,10 +31,26 @@
         var settings = {
             "delta": 0.01,
 
+            "grid": {
+                "on": true,
+                "ticks": [1, 5],
+                "lineWidths": [0.5, 1],
+                "colours": ["#777", "#555"]
+            },
+
+            "axis": {
+                "on": true,
+                "colour": "black",
+                "lineWidth": 3
+            },
+
             // Size is set when canvas (re)sized
             "size": {},
 
-            "lineWidth": 2,
+            "graph": {
+                "lineWidth": 2,
+                "colour": "black"
+            },
 
             "scale": {
                 "x": 70,
@@ -50,21 +66,48 @@
             "colours": {
                 "upperSum": "#C22326",
                 "lowerSum": "#027878",
+            },
+
+            "border": {
+                "on": true,
+                "width": 5,
+                "colour": "black"
             }
         }
 
         var f = function(x) {
             return Math.sin(x);
         }
-        f.domain = [-15, 15];
+        f.domain = [-18, 15];
         f.anchor = [0, 0];
+
         f.points = calculatePoints(f);
         var p = uniformPartition(f.domain, 50);
 
         function draw() {
             clearCanvas();
+
+            if (settings.border.on) {
+                ctx.strokeStyle = settings.border.colour;
+                ctx.lineWidth = settings.border.width;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            }
+
+            if (settings.grid.on) {
+                for (var i=0; i<settings.grid.ticks.length; i++) {
+                    drawGrid(
+                        settings.grid.ticks[i],
+                        settings.grid.lineWidths[i],
+                        settings.grid.colours[i]
+                    );
+                }
+            }
             drawSums(f, p);
             drawGraph(f);
+
+            if (settings.axis.on) {
+                drawAxis(f);
+            }
         }
 
         function clearCanvas() {
@@ -91,6 +134,8 @@
         }
 
         function calculatePoints(f) {
+            // Return an array of [x,f(x)] for x in domain of f at intervals of
+            // settings.delta.
             var points = [];
             for (var x=f.domain[0]; x<=f.domain[1]; x+=settings.delta) {
                 points.push([x, f(x)]);
@@ -110,12 +155,22 @@
         }
 
         function getCanvasCoord(f, t, axis) {
+            // Get canvas coordinate from real coordinate.
+            // (If making changes here be sure to also update getRealCoord())
             var i = (axis === "x" ? 0 : 1);
             return 0.5*settings.size[axis] + settings.scale[axis]*(t - f.anchor[i]);
         }
 
+        function getRealCoord(f, T, axis) {
+            // Get the real coordinate from a canvas coordinate (inverse of
+            // getCanvasCoord())
+            var i = (axis === "x" ? 0 : 1);
+            return f.anchor[i] + (T - 0.5*settings.size[axis]) / settings.scale[axis];
+        }
+
         function drawGraph(f) {
-            ctx.lineWidth = settings.lineWidth;
+            ctx.strokeStyle = settings.graph.colour;
+            ctx.lineWidth = settings.graph.lineWidth;
             ctx.beginPath();
             for (var i=0; i<f.points.length; i++) {
                 var canvasX = getCanvasCoord(f, f.points[i][0], "x");
@@ -123,6 +178,53 @@
 
                 ctx.lineTo(canvasX, canvasY);
             }
+            ctx.stroke();
+        }
+
+        function round(x, n) {
+            // Round x to the nearest n
+            return Math.round(x / n) * n;
+        }
+
+        function drawGrid(frequency, thickness, colour) {
+            var startX = round(getRealCoord(f, 0, "x"), frequency);
+            var endY = round(getRealCoord(f, canvas.width, "x"), frequency);
+
+            ctx.strokeStyle = colour;
+            ctx.lineWidth = thickness;
+
+            // Draw vertical lines
+            for (var x=startX; x<=endY; x+=frequency) {
+                ctx.beginPath();
+                var canvasX = getCanvasCoord(f, x, "x");
+
+                ctx.moveTo(canvasX, 0);
+                ctx.lineTo(canvasX, canvas.height);
+                ctx.stroke();
+            }
+
+            var startY = round(getRealCoord(f, canvas.height, "y"), frequency);
+            var endY = round(getRealCoord(f, 0, "y"), frequency);
+
+            // Draw horizontal lines
+            for (var y=startY; y<=endY; y+=frequency) {
+                ctx.beginPath();
+                var canvasY = getCanvasCoord(f, y, "y");
+
+                ctx.moveTo(0, canvasY);
+                ctx.lineTo(canvas.width, canvasY);
+                ctx.stroke();
+            }
+        }
+
+        function drawAxis(f) {
+            ctx.strokeStyle = settings.axis.colour;
+            ctx.lineWidth = settings.axis.lineWidth;
+            ctx.beginPath();
+            var y = getCanvasCoord(f, 0, "y");
+            ctx.moveTo(0, y);
+            console.log(y);
+            ctx.lineTo(canvas.width, y);
             ctx.stroke();
         }
 
@@ -274,8 +376,6 @@
         resizeCanvas();
         // Resize canvas automatically
         window.addEventListener("resize", resizeCanvas);
-
-        draw();
 
         function animate() {
             var k = 1;
