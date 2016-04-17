@@ -63,9 +63,13 @@
             "minScale": 10,
             "zoomFactor": 0.08, // The lower this number the slower zooming in is
 
-            "colours": {
-                "upperSum": "#C22326",
-                "lowerSum": "#027878",
+            "sums": {
+                "on": true,
+                "opacity": 0.8,
+                "borderColour": "black",
+                "borderWidth": 3,
+                "upperColour": "#C22326",
+                "lowerColour": "#027878"
             },
 
             "border": {
@@ -102,7 +106,9 @@
                     );
                 }
             }
-            drawSums(f, p);
+            if (settings.sums.on) {
+                drawSums(f, p);
+            }
             drawGraph(f);
 
             if (settings.axis.on) {
@@ -235,6 +241,8 @@
             var upper = 0;
             var lower = 0;
 
+            ctx.globalAlpha = settings.sums.opacity;
+
             for (i=1; i<p.length; i++) {
                 // // Endpoints of this sub-interval
                 var start = p[i - 1];
@@ -270,8 +278,8 @@
 
                 // Colours and heights of rectangles
                 var r = [];
-                r.push([maxY, settings.colours.upperSum]);
-                r.push([minY, settings.colours.lowerSum]);
+                r.push([maxY, settings.sums.upperColour]);
+                r.push([minY, settings.sums.lowerColour]);
 
                 // If both max and min are positive then we want to draw upper
                 // sums first, since they will fully cover lower sums otherwise.
@@ -282,6 +290,8 @@
                 }
 
                 for (var j=0; j<r.length; j++) {
+                    ctx.strokeStyle = settings.sums.borderColour;
+                    ctx.lineWidth = settings.sums.borderWidth;
                     ctx.fillStyle = r[j][1];
                     ctx.strokeRect(
                         getCanvasCoord(f, start, "x"), getCanvasCoord(f, 0, "y"),
@@ -295,7 +305,7 @@
                 }
             }
 
-            // console.log(lower + "," + upper);
+            ctx.globalAlpha = 1;
         }
 
         function resizeCanvas() {
