@@ -22,16 +22,38 @@ Infinite scrolling out
     <style>
         body {
             margin: 0;
+            font-family: "Arial";
         }
         #main_canvas {
             display:block;
             margin:auto;
+        }
+        .domain_input {
+            width:30px;
+        }
+        #form {
+            margin:auto;
+            width: 70%;
         }
     </style>
     <meta charset="utf-8" />
 </head>
 
 <body>
+
+    <div id="form">
+        <p><label>f(x): <input type="text" /></label></p>
+        <p>
+            <label>Domain: [<input type="text" class="domain_input" /> ,
+            <input type="text" class="domain_input" />]</label>
+        </p>
+        <p>
+            <label>Lower sums <input type="checkbox" checked onchange="toggleSums('lower')" /></label><br />
+            <label>Upper sums <input type="checkbox" checked onchange="toggleSums('upper')" /></label>
+        </p>
+    </div >
+
+
     <canvas id="main_canvas"></canvas>
 
     <script type="text/javascript">
@@ -74,7 +96,8 @@ Infinite scrolling out
             "zoomFactor": 0.08, // The lower this number the slower zooming in is
 
             "sums": {
-                "on": true,
+                "upper": true,
+                "lower": true,
                 "opacity": 0.8,
                 "borderColour": "black",
                 "borderWidth": 3,
@@ -118,9 +141,7 @@ Infinite scrolling out
                     );
                 }
             }
-            if (settings.sums.on) {
-                drawSums(f, p);
-            }
+            drawSums(f, p);
             drawGraph(f);
 
             if (settings.axis.on) {
@@ -135,6 +156,11 @@ Infinite scrolling out
         function getMouseCoords(e, canvas) {
             // Get the coordinates of the mouse event within the canvas
             return [e.pageX - canvas.offsetLeft, e.pageY - canvas.offsetTop];
+        }
+
+        function toggleSums(type) {
+            settings.sums[type] = settings.sums[type] ? false : true;
+            draw();
         }
 
         function calculatePoints(f) {
@@ -275,8 +301,12 @@ Infinite scrolling out
 
                 // Colours and heights of rectangles
                 var r = [];
-                r.push([maxY, settings.sums.upperColour]);
-                r.push([minY, settings.sums.lowerColour]);
+                if (settings.sums.upper) {
+                    r.push([maxY, settings.sums.upperColour]);
+                }
+                if (settings.sums.lower) {
+                    r.push([minY, settings.sums.lowerColour]);
+                }
 
                 // If both max and min are positive then we want to draw upper
                 // sums first, since they will fully cover lower sums otherwise.
