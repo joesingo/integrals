@@ -114,14 +114,14 @@ Infinite scrolling out
             }
         }
 
-        var f = function(x) {
+        settings.f = function(x) {
             return Math.sin(x);
         }
-        f.domain = [-Math.PI, Math.PI];
-        f.anchor = [0, 0];
+        settings.f.domain = [-Math.PI, Math.PI];
+        settings.anchor = [0, 0];
 
-        f.points = calculatePoints(f);
-        var p = uniformPartition(f.domain, 50);
+        settings.f.points = calculatePoints(settings.f);
+        settings.partition = uniformPartition(settings.f.domain, 50);
 
         function draw() {
             clearCanvas();
@@ -141,11 +141,11 @@ Infinite scrolling out
                     );
                 }
             }
-            drawSums(f, p);
-            drawGraph(f);
+            drawSums(settings.f, settings.partition);
+            drawGraph(settings.f);
 
             if (settings.axis.on) {
-                drawAxis(f);
+                drawAxis();
             }
         }
 
@@ -184,18 +184,18 @@ Infinite scrolling out
             return p;
         }
 
-        function getCanvasCoord(f, t, axis) {
+        function getCanvasCoord(t, axis) {
             // Get canvas coordinate from real coordinate.
             // (If making changes here be sure to also update getRealCoord())
             var i = (axis === "x" ? 0 : 1);
-            return 0.5*settings.size[axis] + settings.scale[axis]*(t - f.anchor[i]);
+            return 0.5*settings.size[axis] + settings.scale[axis]*(t - settings.anchor[i]);
         }
 
-        function getRealCoord(f, T, axis) {
+        function getRealCoord(T, axis) {
             // Get the real coordinate from a canvas coordinate (inverse of
             // getCanvasCoord())
             var i = (axis === "x" ? 0 : 1);
-            return f.anchor[i] + (T - 0.5*settings.size[axis]) / settings.scale[axis];
+            return settings.anchor[i] + (T - 0.5*settings.size[axis]) / settings.scale[axis];
         }
 
         function drawGraph(f) {
@@ -203,8 +203,8 @@ Infinite scrolling out
             ctx.lineWidth = settings.graph.lineWidth;
             ctx.beginPath();
             for (var i=0; i<f.points.length; i++) {
-                var canvasX = getCanvasCoord(f, f.points[i][0], "x");
-                var canvasY = getCanvasCoord(f, f.points[i][1], "y");
+                var canvasX = getCanvasCoord(f.points[i][0], "x");
+                var canvasY = getCanvasCoord(f.points[i][1], "y");
 
                 ctx.lineTo(canvasX, canvasY);
             }
@@ -217,8 +217,8 @@ Infinite scrolling out
         }
 
         function drawGrid(frequency, thickness, colour) {
-            var startX = round(getRealCoord(f, 0, "x"), frequency);
-            var endY = round(getRealCoord(f, canvas.width, "x"), frequency);
+            var startX = round(getRealCoord(0, "x"), frequency);
+            var endY = round(getRealCoord(canvas.width, "x"), frequency);
 
             ctx.strokeStyle = colour;
             ctx.lineWidth = thickness;
@@ -226,20 +226,20 @@ Infinite scrolling out
             // Draw vertical lines
             for (var x=startX; x<=endY; x+=frequency) {
                 ctx.beginPath();
-                var canvasX = getCanvasCoord(f, x, "x");
+                var canvasX = getCanvasCoord(x, "x");
 
                 ctx.moveTo(canvasX, 0);
                 ctx.lineTo(canvasX, canvas.height);
                 ctx.stroke();
             }
 
-            var startY = round(getRealCoord(f, canvas.height, "y"), frequency);
-            var endY = round(getRealCoord(f, 0, "y"), frequency);
+            var startY = round(getRealCoord(canvas.height, "y"), frequency);
+            var endY = round(getRealCoord(0, "y"), frequency);
 
             // Draw horizontal lines
             for (var y=startY; y<=endY; y+=frequency) {
                 ctx.beginPath();
-                var canvasY = getCanvasCoord(f, y, "y");
+                var canvasY = getCanvasCoord(y, "y");
 
                 ctx.moveTo(0, canvasY);
                 ctx.lineTo(canvas.width, canvasY);
@@ -247,11 +247,11 @@ Infinite scrolling out
             }
         }
 
-        function drawAxis(f) {
+        function drawAxis() {
             ctx.strokeStyle = settings.axis.colour;
             ctx.lineWidth = settings.axis.lineWidth;
             ctx.beginPath();
-            var y = getCanvasCoord(f, 0, "y");
+            var y = getCanvasCoord(0, "y");
             ctx.moveTo(0, y);
             ctx.lineTo(canvas.width, y);
             ctx.stroke();
@@ -321,11 +321,11 @@ Infinite scrolling out
                     ctx.lineWidth = settings.sums.borderWidth;
                     ctx.fillStyle = r[j][1];
                     ctx.strokeRect(
-                        getCanvasCoord(f, start, "x"), getCanvasCoord(f, 0, "y"),
+                        getCanvasCoord(start, "x"), getCanvasCoord(0, "y"),
                         settings.scale.x*(end - start), settings.scale.y*r[j][0]
                     );
                     ctx.fillRect(
-                        getCanvasCoord(f, start, "x"), getCanvasCoord(f, 0, "y"),
+                        getCanvasCoord(start, "x"), getCanvasCoord(0, "y"),
                         settings.scale.x*(end - start), settings.scale.y*r[j][0]
                     );
 
@@ -380,8 +380,8 @@ Infinite scrolling out
             if (mouseDown) {
                 // Adjust anchor to achieve panning
                 var mouseCoords = getMouseCoords(e, canvas);
-                f.anchor[0] += (dragPoint[0] - mouseCoords[0]) / settings.scale.x;
-                f.anchor[1] += (dragPoint[1] - mouseCoords[1]) / settings.scale.y;
+                settings.anchor[0] += (dragPoint[0] - mouseCoords[0]) / settings.scale.x;
+                settings.anchor[1] += (dragPoint[1] - mouseCoords[1]) / settings.scale.y;
 
                 draw();
 
@@ -421,8 +421,8 @@ Infinite scrolling out
 
             // Now need to adjust anchor so we have zoomed into the right part
             // of the graph
-            f.anchor[0] -= (mouseCoords[0] - 0.5*settings.size.x)*((1 / settings.scale.x) - (1 / origScale[0]));
-            f.anchor[1] -= (mouseCoords[1] - 0.5*settings.size.y)*((1 / settings.scale.y) - (1 / origScale[1]));
+            settings.anchor[0] -= (mouseCoords[0] - 0.5*settings.size.x)*((1 / settings.scale.x) - (1 / origScale[0]));
+            settings.anchor[1] -= (mouseCoords[1] - 0.5*settings.size.y)*((1 / settings.scale.y) - (1 / origScale[1]));
 
             for (var i=0; i<settings.grid.ticks.length; i++) {
                 // settings.grid.ticks[i] /= 0.9;
