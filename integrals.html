@@ -1,4 +1,21 @@
 <!DOCTYPE html>
+<!--
+
+TODO:
+
+Round estimate of upper and lower sums
+Estimate actual value of the integral
+Toggle upper/lower sums
+Edit function
+Edit domain
+Edit partition:
+    Uniform width - choose number of subintervals
+    Other - enter partition points manually
+Adjust x and y scale independently
+Infinite scrolling out
+
+-->
+
 <html>
 
 <head>
@@ -6,7 +23,12 @@
         body {
             margin: 0;
         }
+        #main_canvas {
+            display:block;
+            margin:auto;
+        }
     </style>
+    <meta charset="utf-8" />
 </head>
 
 <body>
@@ -30,8 +52,10 @@
                 "lineWidth": 3
             },
 
-            // Size is set when canvas (re)sized
-            "size": {},
+            "size": {
+                "x": 900,
+                "y": 600
+            },
 
             "graph": {
                 "lineWidth": 2,
@@ -55,7 +79,9 @@
                 "borderColour": "black",
                 "borderWidth": 3,
                 "upperColour": "#C22326",
-                "lowerColour": "#027878"
+                "lowerColour": "#027878",
+                "font": "15px Arial",
+                "fontColour": "blue"
             },
 
             "border": {
@@ -68,7 +94,7 @@
         var f = function(x) {
             return Math.sin(x);
         }
-        f.domain = [-18, 15];
+        f.domain = [-Math.PI, Math.PI];
         f.anchor = [0, 0];
 
         f.points = calculatePoints(f);
@@ -276,25 +302,42 @@
                 }
             }
 
+            // Show estimates for upper and lower sum
+            var padding = 10;
+            var squareSize = 30;
+
+            ctx.font = settings.sums.font;
+            ctx.fillStyle = settings.sums.fontColour;
+            ctx.textBaseline = "middle";
+
+            // Put this stuff in an array so we can loop through it
+            var a = [
+                [settings.sums.lowerColour, lower],
+                [settings.sums.upperColour, upper],
+            ];
+
+            for (var i=0; i<a.length; i++) {
+                // Round to 4dp and display in top corner
+                var text = "≈ " + a[i][1];
+
+                ctx.fillStyle = a[i][0];
+                ctx.fillRect(padding, (i+1)*padding + i*squareSize, squareSize, squareSize);
+                ctx.fillText(text, 2*padding + squareSize, (i+1)*padding + (0.5+i)*squareSize);
+            }
+
+
             ctx.globalAlpha = 1;
         }
 
         function resizeCanvas() {
-            // Make the canvas the full size of the screen
-            // canvas.width = window.innerWidth;
-            // canvas.height = window.innerHeight;
-
-            settings.size.x = canvas.width;
-            settings.size.y = canvas.height;
+            canvas.width = settings.size.x;
+            canvas.height = settings.size.y;
 
             draw();
         }
 
         var canvas = document.getElementById("main_canvas");
         var ctx = canvas.getContext("2d");
-
-        canvas.width = 900;
-        canvas.height = 600;
 
         // Pan when dragged
         var mouseDown = false;
@@ -351,12 +394,14 @@
             f.anchor[0] -= (mouseCoords[0] - 0.5*settings.size.x)*((1 / settings.scale.x) - (1 / origScale[0]));
             f.anchor[1] -= (mouseCoords[1] - 0.5*settings.size.y)*((1 / settings.scale.y) - (1 / origScale[1]));
 
+            for (var i=0; i<settings.grid.ticks.length; i++) {
+                // settings.grid.ticks[i] /= 0.9;
+            }
+
             draw();
         });
 
         resizeCanvas();
-        // Resize canvas automatically
-        window.addEventListener("resize", resizeCanvas);
 
         function animate() {
             var k = 1;
