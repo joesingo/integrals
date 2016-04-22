@@ -31,6 +31,9 @@ Infinite scrolling out
         .domain_input {
             width:30px;
         }
+        .error {
+            border: 2px solid red;
+        }
         #form {
             margin:auto;
             width: 70%;
@@ -44,8 +47,13 @@ Infinite scrolling out
     <div id="form">
         <p><label>f(x): <input type="text" /></label></p>
         <p>
-            <label>Domain: [<input type="text" class="domain_input" /> ,
-            <input type="text" class="domain_input" />]</label>
+            <label>Domain: [
+                <input type="text" class="domain_input" id="domain_start" /> ,
+                <input type="text" class="domain_input" id="domain_end" />]
+            </label>
+        </p>
+        <p>
+            <button onclick="updateFunction()">Update</button>
         </p>
         <p>
             <label>Lower sums <input type="checkbox" checked onchange="toggleSums('lower')" /></label><br />
@@ -114,15 +122,6 @@ Infinite scrolling out
             }
         }
 
-        settings.f = function(x) {
-            return Math.sin(x);
-        }
-        settings.f.domain = [-Math.PI, Math.PI];
-        settings.anchor = [0, 0];
-
-        settings.f.points = calculatePoints(settings.f);
-        settings.partition = uniformPartition(settings.f.domain, 50);
-
         function draw() {
             clearCanvas();
 
@@ -161,6 +160,72 @@ Infinite scrolling out
         function toggleSums(type) {
             settings.sums[type] = settings.sums[type] ? false : true;
             draw();
+        }
+
+        function addClass(element, className) {
+            // Add the specified class to the given element
+            c("adding class " + className);
+            var classes = element.className.split(" ");
+            if (classes.indexOf(className) === -1) {
+                classes.push(className);
+            }
+            element.className = classes.join(" ");
+        }
+
+        function removeClass(element, className) {
+            // Remove the specified class from the given element
+            var classes = element.className.split(" ");
+            var index = classes.indexOf(className);
+            if (index !== -1) {
+                classes.splice(index, 1);
+            }
+            element.className = classes.join(" ");
+        }
+
+        function validateFloat(textbox) {
+            // Check if the contents of the textbox is an float; return true
+            // if so or show an error and return false if not
+            var f = parseFloat(textbox.value);
+            if (isNaN(f)) {
+                addClass(textbox, "error");
+                return false
+            }
+            else {
+                // Remove error class in case there was previously an error
+                removeClass(textbox, "error");
+                return true;
+            }
+        }
+
+        function setFunction(func, domain) {
+            settings.f = func;
+            settings.f.domain = domain;
+            settings.f.points = calculatePoints(func);
+            settings.anchor = [(domain[0] + domain[1]) / 2, 0];
+        }
+
+        function updateFunction() {
+            var startTextbox = document.getElementById("domain_start");
+            var endTextbox = document.getElementById("domain_end");
+
+            // Validate both boxes
+            var startValid = validateFloat(startTextbox);
+            var endValid = validateFloat(endTextbox);
+
+            if (startValid && endValid) {
+                var start = parseFloat(startTextbox.value);
+                var end = parseFloat(endTextbox.value);
+
+                if (start < end) {
+                    setFunction(settings.f, [start, end]);
+                    draw();
+                }
+                else {
+                    // Show an error if end >= start
+                    addClass(startTextbox, "error");
+                    addClass(endTextbox, "error");
+                }
+            }
         }
 
         function calculatePoints(f) {
@@ -401,6 +466,9 @@ Infinite scrolling out
 
         // Zoom when scrolling
         canvas.addEventListener("mousewheel", function(e) {
+            // Stop whole page scrolling
+            e.preventDefault();
+
             var mouseCoords = getMouseCoords(e, canvas);
 
             // Keep a copy of the original scale
@@ -431,6 +499,12 @@ Infinite scrolling out
             draw();
         });
 
+        setFunction(function(x) {
+            return Math.sin(x);
+        }, [-Math.PI, Math.PI]);
+
+        settings.partition = uniformPartition(settings.f.domain, 50);
+
         resizeCanvas();
 
         function animate() {
@@ -439,6 +513,11 @@ Infinite scrolling out
                 p = uniformPartition(f.domain, k++);
                 draw();
             }, 250)
+        }
+
+        function c(s) {
+            // To save typing when debugging
+            console.log(s);
         }
 
     </script>
