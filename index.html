@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!--
+
+TODO:
+
+Round estimate of upper and lower sums
+Estimate actual value of the integral
+Toggle upper/lower sums
+Edit function
+Edit domain
+Edit partition:
+    Uniform width - choose number of subintervals
+    Other - enter partition points manually
+Adjust x and y scale independently
+Infinite scrolling out
+Fix zooming in where zooming gets slower the more you go
+
+-->
+
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Arial";
+        }
+        #main_canvas {
+            display:block;
+            margin:auto;
+        }
+        .domain_input {
+            width:30px;
+        }
+        .error {
+            border: 2px solid red;
+        }
+        #form {
+            margin:auto;
+            width: 70%;
+        }
+        #function_settings td, #function_settings th {
+            padding: 6px 10px;
+        }
+    </style>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+
+    <div id="form">
+
+        <table id="function_settings">
+            <thead>
+                <tr>
+                    <th>f(x)</th>
+                    <th>Domain</th>
+                    <th>Partition</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <!-- f(x) -->
+                        <input type="text" />
+                    </td>
+                    <td>
+                        <!-- Domain -->
+                        [<input type="text" class="domain_input" id="domain_start" /> ,
+                        <input type="text" class="domain_input" id="domain_end" />
+                        ]
+                    </td>
+                    <td>
+                        <!-- Partition -->
+                        <label>
+                            <input type="radio" name="partition_type" checked />Uniform widths
+                        </label>
+                        <br />
+                        <label>
+                            <input type="radio" name="partition_type" />Manual
+                        </label>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            <button onclick="updateFunction()">Update</button>
+        </p>
+        <p>
+            <label>Lower sums <input type="checkbox" checked onchange="toggleSums('lower')" /></label><br />
+            <label>Upper sums <input type="checkbox" checked onchange="toggleSums('upper')" /></label>
+        </p>
+    </div >
+
+
+    <canvas id="main_canvas"></canvas>
+
+    <script type="text/javascript" src="integrals.js"></script>
+</body>
+
+</html>
