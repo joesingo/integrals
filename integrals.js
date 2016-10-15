@@ -475,6 +475,13 @@ for (var func in exampleFunctions) {
     dropdown.appendChild(option);
 }
 
+// Update function settings whever one of the options is changed
+var inputs = document.querySelectorAll("#function_settings input, " +
+                                       "#function_settings select");
+for (var i=0; i<inputs.length; i++) {
+    inputs[i].onchange = updateFunction;
+}
+
 updateFunction();
 
 resizeCanvas();
