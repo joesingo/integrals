@@ -96,7 +96,6 @@ function toggleSums(type) {
 
 function addClass(element, className) {
     // Add the specified class to the given element
-    c("adding class " + className);
     var classes = element.className.split(" ");
     if (classes.indexOf(className) === -1) {
         classes.push(className);
@@ -129,35 +128,61 @@ function validateFloat(textbox) {
     }
 }
 
-function setFunction(func, domain) {
+function validateInteger(textbox) {
+    // Like validateFloat() above, but check for an integer value
+    var f = parseInt(textbox.value);
+    if (isNaN(f)) {
+        addClass(textbox, "error");
+        return false
+    }
+    else {
+        removeClass(textbox, "error");
+        return true;
+    }
+}
+
+function setFunction(func, domain, partition) {
     settings.f = func;
     settings.f.domain = domain;
     settings.f.points = calculatePoints(func);
     settings.anchor = [(domain[0] + domain[1]) / 2, 0];
+    settings.partition = partition;
 }
 
 function updateFunction() {
+    // Update the function, domain and partition when user changes it
     var startTextbox = document.getElementById("domain_start");
     var endTextbox = document.getElementById("domain_end");
+    var partitionTextbox = document.getElementById("partition_size");
 
-    // Validate both boxes
+    // Validate both boxes for domain
     var startValid = validateFloat(startTextbox);
     var endValid = validateFloat(endTextbox);
 
-    if (startValid && endValid) {
+    if (!startValid || !endValid) {
+        return false;
+    }
+    else {
         var start = parseFloat(startTextbox.value);
         var end = parseFloat(endTextbox.value);
 
-        if (start < end) {
-            setFunction(settings.f, [start, end]);
-            draw();
-        }
-        else {
-            // Show an error if end >= start
+        if (end <= start) {
+            // Show an error if end <= start
             addClass(startTextbox, "error");
             addClass(endTextbox, "error");
+            return false;
         }
     }
+
+    if (!validateInteger(partitionTextbox)) {
+        return false;
+    }
+
+    var domain = [start, end];
+    var partition = uniformPartition(domain, parseInt(partitionTextbox.value));
+
+    setFunction(settings.f, [start, end], partition);
+    draw();
 }
 
 function calculatePoints(f) {
@@ -433,16 +458,14 @@ canvas.addEventListener("mousewheel", function(e) {
 
 setFunction(function(x) {
     return Math.sin(x);
-}, [-Math.PI, Math.PI]);
-
-settings.partition = uniformPartition(settings.f.domain, 50);
+}, [-Math.PI, Math.PI], uniformPartition([-Math.PI, Math.PI], 50));
 
 resizeCanvas();
 
 function animate() {
     var k = 1;
     setInterval(function() {
-        p = uniformPartition(f.domain, k++);
+        settings.partition = uniformPartition(settings.f.domain, k++);
         draw();
     }, 250)
 }

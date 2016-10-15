@@ -29,7 +29,7 @@ Fix zooming in where zooming gets slower the more you go
             display:block;
             margin:auto;
         }
-        .domain_input {
+        .number_input {
             width:30px;
         }
         .error {
@@ -37,10 +37,21 @@ Fix zooming in where zooming gets slower the more you go
         }
         #form {
             margin:auto;
-            width: 70%;
+            width: 100%;
+            background: lightblue;
+        }
+        #function_settings {
+            border-collapse: collapse;
+            margin: auto;
+            table-layout: fixed;
         }
         #function_settings td, #function_settings th {
-            padding: 6px 10px;
+            padding: 4px 12px;
+            /*border: 1px solid black;*/
+        }
+        #function_settings td:first-child{
+            text-align: right;
+            vertical-align: top;
         }
     </style>
     <meta charset="utf-8" />
@@ -51,45 +62,37 @@ Fix zooming in where zooming gets slower the more you go
     <div id="form">
 
         <table id="function_settings">
-            <thead>
-                <tr>
-                    <th>f(x)</th>
-                    <th>Domain</th>
-                    <th>Partition</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <!-- f(x) -->
-                        <input type="text" />
-                    </td>
-                    <td>
-                        <!-- Domain -->
-                        [<input type="text" class="domain_input" id="domain_start" /> ,
-                        <input type="text" class="domain_input" id="domain_end" />
-                        ]
-                    </td>
-                    <td>
-                        <!-- Partition -->
-                        <label>
-                            <input type="radio" name="partition_type" checked />Uniform widths
-                        </label>
-                        <br />
-                        <label>
-                            <input type="radio" name="partition_type" />Manual
-                        </label>
-                    </td>
-                </tr>
-            </tbody>
+            <tr>
+                <td>f(x) =</td>
+                <td><input type="text" /></td>
+            </tr>
+            <tr>
+                <td>Domain:</td>
+                <td>
+                    [<input type="text" class="number_input" id="domain_start" /> ,
+                    <input type="text" class="number_input" id="domain_end" />
+                    ]
+                </td>
+            </tr>
+            <tr>
+                <td>Partitions</td>
+                <td>
+                    <input type="text" class="number_input" id="partition_size" />
+                </td>
+            </tr>
         </table>
 
         <p>
             <button onclick="updateFunction()">Update</button>
         </p>
         <p>
-            <label>Lower sums <input type="checkbox" checked onchange="toggleSums('lower')" /></label><br />
-            <label>Upper sums <input type="checkbox" checked onchange="toggleSums('upper')" /></label>
+            <label>Lower sums <input type="checkbox" checked
+                                     onchange="toggleSums('lower')" />
+            </label>
+            <br />
+            <label>Upper sums <input type="checkbox" checked
+                                     onchange="toggleSums('upper')" />
+            </label>
         </p>
     </div >
 
