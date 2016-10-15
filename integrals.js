@@ -59,8 +59,8 @@ var exampleFunctions = {
     "x^3": function(x) {return 0.2*x*x*x;},
     "exp(-x^2)": function(x) {return 3*Math.exp(-x*x);},
     "|x|": function(x) {return Math.abs(x);},
-    "1 / x": function(x) {return 1 / x;},
-    "sin(x) / x": function(x) {return 10 * Math.sin(x) / x;}
+    "1 / x": function(x) {return (x == 0 ? 1000 : (1 / x));},
+    "sin(x) / x": function(x) {return (x == 0 ? 1 : (10 * Math.sin(x) / x));}
 };
 
 function draw() {
@@ -476,8 +476,8 @@ for (var func in exampleFunctions) {
 }
 
 // Update function settings whever one of the options is changed
-var inputs = document.querySelectorAll("#function_settings input, " +
-                                       "#function_settings select");
+var inputs = document.querySelectorAll("#functions_dropdown, #domain_start, " +
+                                       "#domain_end, #partition_size");
 for (var i=0; i<inputs.length; i++) {
     inputs[i].onchange = updateFunction;
 }

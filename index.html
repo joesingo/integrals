@@ -22,7 +22,6 @@ Fix zooming in where zooming gets slower the more you go
 <head>
     <style>
         body {
-            margin: 0;
             font-family: "Arial";
         }
         #main_canvas {
@@ -38,7 +37,6 @@ Fix zooming in where zooming gets slower the more you go
         #form {
             margin:auto;
             width: 100%;
-            background: lightblue;
         }
         #function_settings {
             border-collapse: collapse;
@@ -47,7 +45,6 @@ Fix zooming in where zooming gets slower the more you go
         }
         #function_settings td, #function_settings th {
             padding: 4px 12px;
-            /*border: 1px solid black;*/
         }
         #function_settings td:first-child{
             text-align: right;
@@ -87,17 +84,18 @@ Fix zooming in where zooming gets slower the more you go
                            value="40" />
                 </td>
             </tr>
-        </table>
 
-        <p>
-            <label>Lower sums <input type="checkbox" checked
-                                     onchange="toggleSums('lower')" />
-            </label>
-            <br />
-            <label>Upper sums <input type="checkbox" checked
-                                     onchange="toggleSums('upper')" />
-            </label>
-        </p>
+            <tr>
+                <td colspan="2">
+                    <label>Lower sums <input type="checkbox" checked
+                                             onchange="toggleSums('lower')" />
+                    </label>
+                    <label>Upper sums <input type="checkbox" checked
+                                             onchange="toggleSums('upper')" />
+                    </label>
+                </td>
+            </tr>
+        </table>
     </div >
 
 
