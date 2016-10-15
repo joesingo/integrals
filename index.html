@@ -29,7 +29,8 @@ Fix zooming in where zooming gets slower the more you go
             margin:auto;
         }
         .number_input {
-            width:30px;
+            width: 50px;
+            text-align: center;
         }
         .error {
             border: 2px solid red;
@@ -70,17 +71,17 @@ Fix zooming in where zooming gets slower the more you go
             <tr>
                 <td>Domain:</td>
                 <td>
-                    [<input type="text" class="number_input" id="domain_start"
+                    [<input type="number" class="number_input" id="domain_start"
                             value="-6" /> ,
-                    <input type="text" class="number_input" id="domain_end"
+                    <input type="number" class="number_input" id="domain_end"
                            value="6" />
                     ]
                 </td>
             </tr>
             <tr>
-                <td>Partitions</td>
+                <td>Partition size:</td>
                 <td>
-                    <input type="text" class="number_input" id="partition_size"
+                    <input type="number" class="number_input" id="partition_size"
                            value="40" />
                 </td>
             </tr>
