@@ -54,6 +54,15 @@ var settings = {
     }
 }
 
+var exampleFunctions = {
+    "sin(x)": function(x) {return Math.sin(x);},
+    "x^3": function(x) {return 0.2*x*x*x;},
+    "exp(-x^2)": function(x) {return 3*Math.exp(-x*x);},
+    "|x|": function(x) {return Math.abs(x);},
+    "1 / x": function(x) {return 1 / x;},
+    "sin(x) / x": function(x) {return 10 * Math.sin(x) / x;}
+};
+
 function draw() {
     clearCanvas();
 
@@ -154,6 +163,7 @@ function updateFunction() {
     var startTextbox = document.getElementById("domain_start");
     var endTextbox = document.getElementById("domain_end");
     var partitionTextbox = document.getElementById("partition_size");
+    var func = document.getElementById("functions_dropdown").value;
 
     // Validate both boxes for domain
     var startValid = validateFloat(startTextbox);
@@ -181,7 +191,7 @@ function updateFunction() {
     var domain = [start, end];
     var partition = uniformPartition(domain, parseInt(partitionTextbox.value));
 
-    setFunction(settings.f, [start, end], partition);
+    setFunction(exampleFunctions[func], [start, end], partition);
     draw();
 }
 
@@ -456,9 +466,16 @@ canvas.addEventListener("mousewheel", function(e) {
     draw();
 });
 
-setFunction(function(x) {
-    return Math.sin(x);
-}, [-Math.PI, Math.PI], uniformPartition([-Math.PI, Math.PI], 50));
+// Populate functions dropdown
+var dropdown = document.getElementById("functions_dropdown");
+for (var func in exampleFunctions) {
+    var option = document.createElement("option");
+    option.value = func;
+    option.innerHTML = func;
+    dropdown.appendChild(option);
+}
+
+updateFunction();
 
 resizeCanvas();
 

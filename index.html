@@ -64,20 +64,27 @@ Fix zooming in where zooming gets slower the more you go
         <table id="function_settings">
             <tr>
                 <td>f(x) =</td>
-                <td><input type="text" /></td>
+                <td>
+                    <select id="functions_dropdown">
+                        <!-- Note: Items are added here by JS -->
+                    </select>
+                </td>
             </tr>
             <tr>
                 <td>Domain:</td>
                 <td>
-                    [<input type="text" class="number_input" id="domain_start" /> ,
-                    <input type="text" class="number_input" id="domain_end" />
+                    [<input type="text" class="number_input" id="domain_start"
+                            value="-6" /> ,
+                    <input type="text" class="number_input" id="domain_end"
+                           value="6" />
                     ]
                 </td>
             </tr>
             <tr>
                 <td>Partitions</td>
                 <td>
-                    <input type="text" class="number_input" id="partition_size" />
+                    <input type="text" class="number_input" id="partition_size"
+                           value="40" />
                 </td>
             </tr>
         </table>
