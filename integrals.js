@@ -1,58 +1,36 @@
 var settings = {
-    "delta": 0.01,
-
-    "grid": {
-        "on": true,
-        "ticks": [1, 5],
-        "lineWidths": [0.5, 1],
-        "colours": ["#777", "#555"]
-    },
-
-    "axis": {
-        "on": true,
-        "colour": "black",
-        "lineWidth": 3
-    },
-
-    "size": {
-        "x": 900,
-        "y": 600
-    },
-
-    "graph": {
-        "lineWidth": 2,
-        "colour": "black"
-    },
-
-    "scale": {
-        "x": 70,
-        "y": -70
-        // y scale is always negative because we want up to be the
-        // positive y direction, but for canvas coordinates it's the
-        // other way around
-    },
-
-    "minScale": 10,
-    "zoomFactor": 0.08, // The lower this number the slower zooming in is
+    "width": 900,
+    "height": 600,
 
     "sums": {
-        "upper": true,
-        "lower": true,
         "opacity": 0.8,
-        "borderColour": "black",
-        "borderWidth": 3,
-        "upperColour": "#C22326",
-        "lowerColour": "#027878",
         "font": "15px Arial",
-        "fontColour": "blue"
     },
 
-    "border": {
-        "on": true,
-        "width": 5,
-        "colour": "black"
-    }
+    "colours": {
+        "function": "black",
+        "upperSums": "#077187",
+        "lowerSums": "#74A57F",
+        "sumsOutline": "black"
+    },
+
+    "delta": 0.001
 }
+
+// This canvas is used to draw the grid
+var gridCanvas = document.getElementById("main_canvas");
+gridCanvas.width = settings.width;
+gridCanvas.height = settings.height;
+
+var grid = new Grid(gridCanvas);
+
+// This canvas sits on top of the grid canvas and displays the estimates for
+// the upper and lower integral. This is needed so that the estimates can stay
+// in the same place when the grid is zoomed and scrolled
+var frontCanvas = document.getElementById("front_canvas");
+frontCanvas.width = settings.width;
+frontCanvas.height = settings.height;
+var ctx = frontCanvas.getContext("2d");
 
 var exampleFunctions = {
     "sin(x)": function(x) {return Math.sin(x);},
@@ -60,51 +38,13 @@ var exampleFunctions = {
     "exp(-x^2)": function(x) {return 3*Math.exp(-x*x);},
     "|x|": function(x) {return Math.abs(x);},
     "1 / x": function(x) {return (x == 0 ? 1000 : (1 / x));},
-    "sin(x) / x": function(x) {return (x == 0 ? 1 : (10 * Math.sin(x) / x));}
+    "3sin(x) / x": function(x) {return (x == 0 ? 3 : (3 * Math.sin(x) / x));}
 };
 
-function draw() {
-    clearCanvas();
-
-    if (settings.border.on) {
-        ctx.strokeStyle = settings.border.colour;
-        ctx.lineWidth = settings.border.width;
-        ctx.strokeRect(0, 0, canvas.width, canvas.height);
-    }
-
-    if (settings.grid.on) {
-        for (var i=0; i<settings.grid.ticks.length; i++) {
-            drawGrid(
-                settings.grid.ticks[i],
-                settings.grid.lineWidths[i],
-                settings.grid.colours[i]
-            );
-        }
-    }
-    drawSums(settings.f, settings.partition);
-    drawGraph(settings.f);
-
-    if (settings.axis.on) {
-        drawAxis();
-    }
-}
-
-function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function getMouseCoords(e, canvas) {
-    // Get the coordinates of the mouse event within the canvas
-    return [e.pageX - canvas.offsetLeft, e.pageY - canvas.offsetTop];
-}
-
-function toggleSums(type) {
-    settings.sums[type] = settings.sums[type] ? false : true;
-    draw();
-}
-
+/*
+ * Add the specified class to the given element
+ */
 function addClass(element, className) {
-    // Add the specified class to the given element
     var classes = element.className.split(" ");
     if (classes.indexOf(className) === -1) {
         classes.push(className);
@@ -112,8 +52,10 @@ function addClass(element, className) {
     element.className = classes.join(" ");
 }
 
+/*
+ * Remove the specified class from the given element
+ */
 function removeClass(element, className) {
-    // Remove the specified class from the given element
     var classes = element.className.split(" ");
     var index = classes.indexOf(className);
     if (index !== -1) {
@@ -122,9 +64,11 @@ function removeClass(element, className) {
     element.className = classes.join(" ");
 }
 
+/*
+ * Check if the contents of the textbox is an float; return true if so or show
+ * an error and return false if not
+ */
 function validateFloat(textbox) {
-    // Check if the contents of the textbox is an float; return true
-    // if so or show an error and return false if not
     var f = parseFloat(textbox.value);
     if (isNaN(f)) {
         addClass(textbox, "error");
@@ -137,8 +81,10 @@ function validateFloat(textbox) {
     }
 }
 
+/*
+ * Like validateFloat() above, but check for an integer value
+ */
 function validateInteger(textbox) {
-    // Like validateFloat() above, but check for an integer value
     var f = parseInt(textbox.value);
     if (isNaN(f)) {
         addClass(textbox, "error");
@@ -150,20 +96,124 @@ function validateInteger(textbox) {
     }
 }
 
-function setFunction(func, domain, partition) {
-    settings.f = func;
-    settings.f.domain = domain;
-    settings.f.points = calculatePoints(func);
-    settings.anchor = [(domain[0] + domain[1]) / 2, 0];
-    settings.partition = partition;
+/*
+ * Return a partition of the given interval with n sub-intervals of equal width
+ */
+function uniformPartition(interval, n) {
+    var p = [];
+    var width = (interval[1] - interval[0]) / n;
+    for (var i=0; i<=n; i++) {
+        p.push(interval[0] + i*width);
+    }
+    return p;
 }
 
-function updateFunction() {
-    // Update the function, domain and partition when user changes it
+/*
+ * Estimate the minimum and maximum of a function over the given domain
+ */
+function calculateMinMax(func, domain) {
+    var min = func(domain[0]);
+    var max = func(domain[0]);
+
+    for (var x = domain[0]; x<=domain[1]; x+=settings.delta) {
+        var y = func(x);
+
+        if (y < min) {
+            min = y;
+        }
+
+        if (y > max) {
+            max = y;
+        }
+    }
+
+    return [min, max];
+}
+
+/*
+ * Clear old function and sums, and draw new upper and lower sums
+ */
+function setFunction(func, domain, partition, drawLower, drawUpper) {
+    grid.removeAll();
+    grid.redraw();
+
+    var lowerEstimate = 0;
+    var upperEstimate = 0;
+
+    // Draw upper and lower sums
+    for (var i=1; i<partition.length; i++) {
+        var m = calculateMinMax(func, [partition[i - 1], partition[i]]);
+        var min = m[0];
+        var max = m[1];
+
+        lowerEstimate += min * (partition[i] - partition[i - 1]);
+        upperEstimate += max * (partition[i] - partition[i - 1]);
+
+        var order = [];  // The order in which to draw the sums
+        if (drawUpper) {
+            order.push([max, settings.colours.upperSums]);
+        }
+        if (drawLower) {
+            order.push([min, settings.colours.lowerSums]);
+        }
+
+        // If the maximum is negative then drawing min last will result in min
+        // rectangle covering up the max rectangle, so reverse the order
+        if (max < 0) {
+            order.reverse();
+        }
+
+        for (var j=0; j<order.length; j++) {
+            var points = [
+                [partition[i - 1], 0], [partition[i - 1], order[j][0]],
+                [partition[i], order[j][0]], [partition[i], 0]
+            ];
+
+            grid.addShape(points, {"colour": order[j][1], "fill": true});
+            grid.addShape(points, {"colour": settings.colours.sumsOutline,
+                                   "fill": false});
+        }
+    }
+
+    // Draw the function last so that the sums do not cover it up
+    grid.addFunction(func, domain, {"colour": settings.colours.function});
+
+    // Show estimates for the upper and lower integrals
+    ctx.clearRect(0, 0, frontCanvas.width, frontCanvas.height);
+    ctx.globalAlpha = settings.sums.opacity;
+    var padding = 10;
+    var squareSize = 30;
+
+    ctx.font = settings.sums.font;
+    ctx.textBaseline = "middle";
+
+    var estimates = [
+        [lowerEstimate, settings.colours.lowerSums],
+        [upperEstimate, settings.colours.upperSums]
+    ];
+
+    for (var i=0; i<estimates.length; i++) {
+        // Round to 4dp and display in top corner
+        var text = "≈ " + estimates[i][0];
+
+        ctx.fillStyle = estimates[i][1];
+        ctx.fillRect(padding, (i+1)*padding + i*squareSize, squareSize, squareSize);
+        ctx.fillText(text, 2*padding + squareSize, (i+1)*padding + (0.5+i)*squareSize);
+    }
+    ctx.globalAlpha = 1;
+}
+
+/*
+ * Update the function, domain and partition when user changes it
+ */
+function updateSettings() {
+    console.log("updating settings");
     var startTextbox = document.getElementById("domain_start");
     var endTextbox = document.getElementById("domain_end");
     var partitionTextbox = document.getElementById("partition_size");
     var func = document.getElementById("functions_dropdown").value;
+    var drawLower = document.getElementById("lower_checkbox").checked;
+    var drawUpper = document.getElementById("upper_checkbox").checked;
 
     // Validate both boxes for domain
     var startValid = validateFloat(startTextbox);
@@ -190,281 +240,8 @@ function updateFunction() {
 
     var domain = [start, end];
     var partition = uniformPartition(domain, parseInt(partitionTextbox.value));
-
-    setFunction(exampleFunctions[func], [start, end], partition);
-    draw();
+    setFunction(exampleFunctions[func], domain, partition, drawLower, drawUpper);
 }
-
-function calculatePoints(f) {
-    // Return an array of [x,f(x)] for x in domain of f at intervals of
-    // settings.delta.
-    var points = [];
-    for (var x=f.domain[0]; x<=f.domain[1]; x+=settings.delta) {
-        points.push([x, f(x)]);
-    }
-    return points;
-}
-
-function uniformPartition(interval, n) {
-    // Return a partition of the given interval with n sub-intervals of
-    // equal width
-    var p = [];
-    var width = (interval[1] - interval[0]) / n;
-    for (var i=0; i<=n; i++) {
-        p.push(interval[0] + i*width);
-    }
-    return p;
-}
-
-function getCanvasCoord(t, axis) {
-    // Get canvas coordinate from real coordinate.
-    // (If making changes here be sure to also update getRealCoord())
-    var i = (axis === "x" ? 0 : 1);
-    return 0.5*settings.size[axis] + settings.scale[axis]*(t - settings.anchor[i]);
-}
-
-function getRealCoord(T, axis) {
-    // Get the real coordinate from a canvas coordinate (inverse of
-    // getCanvasCoord())
-    var i = (axis === "x" ? 0 : 1);
-    return settings.anchor[i] + (T - 0.5*settings.size[axis]) / settings.scale[axis];
-}
-
-function drawGraph(f) {
-    ctx.strokeStyle = settings.graph.colour;
-    ctx.lineWidth = settings.graph.lineWidth;
-    ctx.beginPath();
-    for (var i=0; i<f.points.length; i++) {
-        var canvasX = getCanvasCoord(f.points[i][0], "x");
-        var canvasY = getCanvasCoord(f.points[i][1], "y");
-
-        ctx.lineTo(canvasX, canvasY);
-    }
-    ctx.stroke();
-}
-
-function round(x, n) {
-    // Round x to the nearest n
-    return Math.round(x / n) * n;
-}
-
-function drawGrid(frequency, thickness, colour) {
-    var startX = round(getRealCoord(0, "x"), frequency);
-    var endY = round(getRealCoord(canvas.width, "x"), frequency);
-
-    ctx.strokeStyle = colour;
-    ctx.lineWidth = thickness;
-
-    // Draw vertical lines
-    for (var x=startX; x<=endY; x+=frequency) {
-        ctx.beginPath();
-        var canvasX = getCanvasCoord(x, "x");
-
-        ctx.moveTo(canvasX, 0);
-        ctx.lineTo(canvasX, canvas.height);
-        ctx.stroke();
-    }
-
-    var startY = round(getRealCoord(canvas.height, "y"), frequency);
-    var endY = round(getRealCoord(0, "y"), frequency);
-
-    // Draw horizontal lines
-    for (var y=startY; y<=endY; y+=frequency) {
-        ctx.beginPath();
-        var canvasY = getCanvasCoord(y, "y");
-
-        ctx.moveTo(0, canvasY);
-        ctx.lineTo(canvas.width, canvasY);
-        ctx.stroke();
-    }
-}
-
-function drawAxis() {
-    ctx.strokeStyle = settings.axis.colour;
-    ctx.lineWidth = settings.axis.lineWidth;
-    ctx.beginPath();
-    var y = getCanvasCoord(0, "y");
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-}
-
-function drawSums(f, p) {
-    // Draw and estimate an upper/lower sum for the function f and
-    // partition p
-
-    var upper = 0;
-    var lower = 0;
-
-    ctx.globalAlpha = settings.sums.opacity;
-
-    for (i=1; i<p.length; i++) {
-        // // Endpoints of this sub-interval
-        var start = p[i - 1];
-        var end = p[i];
-
-        // Get min/max value of f
-        var minY = null;
-        var maxY = null;
-
-        for (var j=0; j<f.points.length; j++) {
-            var x = f.points[j][0];
-            var y = f.points[j][1];
-
-            if (start <= x && x <= end) {
-                // Set min/max if this is the first time;
-                if (minY === null) {
-                    minY = y;
-                    maxY = y;
-                }
-
-                if (y < minY) {
-                    minY = y;
-                }
-                if (y > maxY) {
-                    maxY = y;
-                }
-            }
-        }
-
-        // Add to the estimates
-        upper += maxY * (end - start);
-        lower += minY * (end - start);
-
-        // Colours and heights of rectangles
-        var r = [];
-        if (settings.sums.upper) {
-            r.push([maxY, settings.sums.upperColour]);
-        }
-        if (settings.sums.lower) {
-            r.push([minY, settings.sums.lowerColour]);
-        }
-
-        // If both max and min are positive then we want to draw upper
-        // sums first, since they will fully cover lower sums otherwise.
-        // However if max and min are both negative then lower sums
-        // should be drawn first
-        if (minY < 0 && maxY < 0) {
-            r.reverse();
-        }
-
-        for (var j=0; j<r.length; j++) {
-            ctx.strokeStyle = settings.sums.borderColour;
-            ctx.lineWidth = settings.sums.borderWidth;
-            ctx.fillStyle = r[j][1];
-            ctx.strokeRect(
-                getCanvasCoord(start, "x"), getCanvasCoord(0, "y"),
-                settings.scale.x*(end - start), settings.scale.y*r[j][0]
-            );
-            ctx.fillRect(
-                getCanvasCoord(start, "x"), getCanvasCoord(0, "y"),
-                settings.scale.x*(end - start), settings.scale.y*r[j][0]
-            );
-
-        }
-    }
-
-    // Show estimates for upper and lower sum
-    var padding = 10;
-    var squareSize = 30;
-
-    ctx.font = settings.sums.font;
-    ctx.fillStyle = settings.sums.fontColour;
-    ctx.textBaseline = "middle";
-
-    // Put this stuff in an array so we can loop through it
-    var a = [
-        [settings.sums.lowerColour, lower],
-        [settings.sums.upperColour, upper],
-    ];
-
-    for (var i=0; i<a.length; i++) {
-        // Round to 4dp and display in top corner
-        var text = "≈ " + a[i][1];
-
-        ctx.fillStyle = a[i][0];
-        ctx.fillRect(padding, (i+1)*padding + i*squareSize, squareSize, squareSize);
-        ctx.fillText(text, 2*padding + squareSize, (i+1)*padding + (0.5+i)*squareSize);
-    }
-
-
-    ctx.globalAlpha = 1;
-}
-
-function resizeCanvas() {
-    canvas.width = settings.size.x;
-    canvas.height = settings.size.y;
-
-    draw();
-}
-
-var canvas = document.getElementById("main_canvas");
-var ctx = canvas.getContext("2d");
-
-// Pan when dragged
-var mouseDown = false;
-var dragPoint = null;
-canvas.addEventListener("mousedown", function(e) {
-    dragPoint = getMouseCoords(e, canvas);
-    mouseDown = true;
-});
-canvas.addEventListener("mousemove", function(e) {
-    if (mouseDown) {
-        // Adjust anchor to achieve panning
-        var mouseCoords = getMouseCoords(e, canvas);
-        settings.anchor[0] += (dragPoint[0] - mouseCoords[0]) / settings.scale.x;
-        settings.anchor[1] += (dragPoint[1] - mouseCoords[1]) / settings.scale.y;
-
-        draw();
-
-        dragPoint = mouseCoords;
-    }
-});
-canvas.addEventListener("mouseup", function(e) {
-    mouseDown = false;
-});
-canvas.addEventListener("mouseleave", function(e) {
-    // For some reason if you have mouse down over canvas and then move
-    // mouse off screen/off the canvas, release the mouse, return to
-    // canvas, mouseup event is not fired... So need to set mouseDown
-    // to false here
-    mouseDown = false;
-});
-
-// Zoom when scrolling
-canvas.addEventListener("mousewheel", function(e) {
-    // Stop whole page scrolling
-    e.preventDefault();
-
-    var mouseCoords = getMouseCoords(e, canvas);
-
-    // Keep a copy of the original scale
-    var origScale = [settings.scale.x, settings.scale.y]
-
-    var d = settings.zoomFactor * e.wheelDelta;
-    settings.scale.x += d;
-    settings.scale.y -= d;
-
-    // Make sure we're not zoomed too far out
-    if (settings.scale.x <= settings.minScale) {
-        settings.scale.x = settings.minScale;
-    }
-    // We have - here because y scale should always be negative
-    if (-settings.scale.y <= settings.minScale) {
-        settings.scale.y = -settings.minScale;
-    }
-
-    // Now need to adjust anchor so we have zoomed into the right part
-    // of the graph
-    settings.anchor[0] -= (mouseCoords[0] - 0.5*settings.size.x)*((1 / settings.scale.x) - (1 / origScale[0]));
-    settings.anchor[1] -= (mouseCoords[1] - 0.5*settings.size.y)*((1 / settings.scale.y) - (1 / origScale[1]));
-
-    for (var i=0; i<settings.grid.ticks.length; i++) {
-        // settings.grid.ticks[i] /= 0.9;
-    }
-
-    draw();
-});
 
 // Populate functions dropdown
 var dropdown = document.getElementById("functions_dropdown");
@@ -477,24 +254,10 @@ for (var func in exampleFunctions) {
 
 // Update function settings whever one of the options is changed
 var inputs = document.querySelectorAll("#functions_dropdown, #domain_start, " +
-                                       "#domain_end, #partition_size");
+                                       "#domain_end, #partition_size, " +
+                                       "#lower_checkbox, #upper_checkbox");
 for (var i=0; i<inputs.length; i++) {
-    inputs[i].onchange = updateFunction;
+    inputs[i].onchange = updateSettings;
 }
 
-updateFunction();
-
-resizeCanvas();
-
-function animate() {
-    var k = 1;
-    setInterval(function() {
-        settings.partition = uniformPartition(settings.f.domain, k++);
-        draw();
-    }, 250)
-}
-
-function c(s) {
-    // To save typing when debugging
-    console.log(s);
-}
+updateSettings();

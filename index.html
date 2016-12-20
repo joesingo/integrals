@@ -1,21 +1,4 @@
 <!DOCTYPE html>
-<!--
-
-TODO:
-
-Round estimate of upper and lower sums
-Estimate actual value of the integral
-Toggle upper/lower sums
-Edit function
-Edit domain
-Edit partition:
-    Uniform width - choose number of subintervals
-    Other - enter partition points manually
-Adjust x and y scale independently
-Infinite scrolling out
-Fix zooming in where zooming gets slower the more you go
-
--->
 
 <html>
 
@@ -24,9 +7,18 @@ Fix zooming in where zooming gets slower the more you go
         body {
             font-family: "Arial";
         }
-        #main_canvas {
-            display:block;
-            margin:auto;
+        #canvases {
+            position: relative;
+            margin: auto;
+            width: 900px;
+        }
+        #main_canvas, #front_canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #front_canvas {
+            pointer-events: none;
         }
         .number_input {
             width: 50px;
@@ -88,20 +80,24 @@ Fix zooming in where zooming gets slower the more you go
 
             <tr>
                 <td colspan="2">
-                    <label>Lower sums <input type="checkbox" checked
-                                             onchange="toggleSums('lower')" />
+                    <label>Lower sums <input type="checkbox" id="lower_checkbox"
+                                             checked/>
                     </label>
-                    <label>Upper sums <input type="checkbox" checked
-                                             onchange="toggleSums('upper')" />
+                    <label>Upper sums <input type="checkbox" id="upper_checkbox"
+                                             checked/>
                     </label>
                 </td>
             </tr>
         </table>
     </div >
 
+    <div id="canvases">
+        <canvas id="main_canvas"></canvas>
+        <canvas id="front_canvas"></canvas>
+    </div>
 
-    <canvas id="main_canvas"></canvas>
-
+    <script type="text/javascript" src="https://joesingo.github.io/grid/matrix.js"></script>
+    <script type="text/javascript" src="https://joesingo.github.io/grid/grid.js"></script>
     <script type="text/javascript" src="integrals.js"></script>
 </body>
 
