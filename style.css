@@ -1,0 +1,40 @@
+body {
+    font-family: "Arial";
+}
+#canvases {
+    position: relative;
+    margin: auto;
+    width: 900px;
+    height: 600px;
+}
+#main_canvas, #front_canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+#front_canvas {
+    pointer-events: none;
+}
+.number_input {
+    width: 50px;
+    text-align: center;
+}
+.error {
+    border: 2px solid red;
+}
+#form {
+    margin:auto;
+    width: 100%;
+}
+#function_settings {
+    border-collapse: collapse;
+    margin: auto;
+    table-layout: fixed;
+}
+#function_settings td, #function_settings th {
+    padding: 4px 12px;
+}
+#function_settings td:first-child{
+    text-align: right;
+    vertical-align: top;
+}
