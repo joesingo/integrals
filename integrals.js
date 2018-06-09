@@ -8,7 +8,7 @@ var settings = {
     },
 
     "colours": {
-        "function": "black",
+        "function": "red",
         "upperSums": "#077187",
         "lowerSums": "#74A57F",
         "sumsOutline": "black"
@@ -176,7 +176,11 @@ function setFunction(func, domain, partition, drawLower, drawUpper) {
     }
 
     // Draw the function last so that the sums do not cover it up
-    grid.addFunction(func, domain, {"colour": settings.colours.function});
+    var style = {
+        "colour": settings.colours.function,
+        "line_width": 3
+    };
+    grid.addFunction(func, domain, style);
 
     // Show estimates for the upper and lower integrals
     ctx.clearRect(0, 0, frontCanvas.width, frontCanvas.height);
@@ -238,8 +242,8 @@ function updateSettings() {
         return false;
     }
 
-    var domain = [start, end];
-    var partition = uniformPartition(domain, parseInt(partitionTextbox.value));
+    var domain = {"interval": [start, end]};
+    var partition = uniformPartition(domain.interval, parseInt(partitionTextbox.value));
     setFunction(exampleFunctions[func], domain, partition, drawLower, drawUpper);
 }
 
